@@ -58,22 +58,31 @@
 */
 	function Clock(canvas)
 	{
-		this.canvas = canvas;
-		this.context = canvas.getContext('2d');
+		// Set the lengths and values to use when rendering
+		this.setMetrics = function()
+		{
+			this.radius = this.sizeFactor * Math.min(this.canvas.height, this.canvas.height) / 2.0;
+
+			this.secondsLength = this.radius;
+			this.minutesLength = 0.9 * this.radius;
+			this.hoursLength = 0.7 * this.radius;
+
+			this.tickLength = 0.05 * this.radius;
+		}
 		
-		// The radius of the face of the clock. 
-		this.radius = 0.9 * Math.min(this.canvas.height, this.canvas.height) / 2.0;
-		
-		this.secondsLength = this.radius;
-		this.minutesLength = 0.9 * this.radius;
-		this.hoursLength = 0.7 * this.radius;
-		
-		this.tickLength = 0.05 * this.radius;
-		
-		this.bodyBackColor = "#000000";
-		this.faceBackColor = "#ffffff";
-		this.foreColor     = "#000000";
-		
+		this.setColors = function(bodyBack, faceBack, fore)
+		{
+			this.bodyBackColor = bodyBack;
+			this.faceBackColor = faceBack;
+			this.foreColor     = fore;
+		}
+
+		this.changeSizeFactor = function(value)
+		{
+			this.sizeFactor = value;
+			this.setMetrics();
+		}
+
 		this.draw = function()
 		{
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -98,7 +107,9 @@
 			// Clock face
 			Util.fillCircle(this.context, 0, 0, this.radius, this.faceBackColor);
 			Util.drawCircle(this.context, 0, 0, this.radius);
-			
+		
+			this.context.strokeStyle = this.foreColor;
+
 			// Get the current time
 			var now = new Date();
 			var seconds = now.getSeconds();
@@ -116,8 +127,7 @@
 				
 			// Angle of the minutes hand
 			var minutesTheta = 
-				(2*Math.PI - 2*Math.PI / 60.0 * minutes) + Math.PI / 2.0 - 
-				seconds / 60.0 * 2 * Math.PI / 60.0;
+				Math.PI*(2*(1 - 1 / 60.0 * minutes) + 1.0 / 2.0 - seconds * 2 / 3600.0);
 			
 			// Draw the minutes hand
 			Util.drawLine(this.context, 0, 0, 
@@ -133,14 +143,6 @@
 			Util.drawLine(this.context, 0, 0, 
 				this.hoursLength * Math.cos(hoursTheta), 
 				this.hoursLength * Math.sin(hoursTheta)); 
-				
-			// DEBUG!
-			/*
-			var t = new Trace(document.getElementById("debug"));
-			t.clear();
-			t.writeLine(hours + ":" + minutes + ":" + seconds);
-			t.writeLine("BLA");
-			*/
 
 			// Draw ticks
 			for(var theta = 0 ; theta < 2*Math.PI ; theta += 2*Math.PI / 12.0)
@@ -155,6 +157,14 @@
 			this.context.restore(); // Translate to center
 			this.context.restore();	// Transform to cartesian
 		}
+
+		this.canvas = canvas;
+		this.context = canvas.getContext('2d');
+		
+		// The radius of the face of the clock.
+		this.sizeFactor = 0.9;
+		this.setMetrics();
+		this.setColors("#000000", "#ffffff", "#000000");
 	}
 	
 	
@@ -164,6 +174,8 @@
 	{
 		var clockCanvas = document.getElementById("clock");
 		clock = new Clock(clockCanvas);
+		clock.changeSizeFactor(0.9);
+		clock.setColors("#ff0000", "#ffff00", "#0000ff");
 		clock.draw();
 		
 		setInterval('clock.draw();',1000);
