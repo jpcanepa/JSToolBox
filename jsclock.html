@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head><title>HTML5 test</title>
+	<script type="text/javascript">
+	var Util = 
+	{
+		transformToCartesian : function(context)
+		{
+			context.setTransform(1, 0, 0, -1, 0, context.canvas.height);
+		},
+		
+		drawLine : function(context, x1, y1, x2, y2)
+		{
+			context.beginPath();
+			context.moveTo(x1,y1);
+			context.lineTo(x2,y2);
+			context.closePath();
+			context.stroke();
+		},
+		
+		drawCircle : function(context, x, y, radius)
+		{
+			context.beginPath();
+			context.arc(x, y, radius, 0, 2*Math.PI);
+			context.closePath();
+			context.stroke();
+		},
+		
+		fillCircle : function(context, x, y, radius, fillColor)
+		{
+			context.save();
+			context.beginPath();
+			context.arc(x, y, radius, 0, 2*Math.PI);
+			context.closePath();
+			context.fillStyle = fillColor;
+			context.fill();
+			context.restore();			
+		}
+	}
+/*
+	function Trace(destination) 
+	{
+		var debugDiv = document.createElement('div');
+		document.getElementsByTagName("body").appendChild(debugDiv);		
+		
+		this.destination = document.getElementById('debug');
+		
+		this.writeLine = function(message)
+		{
+			this.destination.innerHTML += message + "<br>";
+		}
+		
+		this.clear = function()
+		{
+			this.destination.innerHTML = "";
+		}
+	}
+*/
+	function Clock(canvas)
+	{
+		this.canvas = canvas;
+		this.context = canvas.getContext('2d');
+		
+		// The radius of the face of the clock. 
+		this.radius = 0.9 * Math.min(this.canvas.height, this.canvas.height) / 2.0;
+		
+		this.secondsLength = this.radius;
+		this.minutesLength = 0.9 * this.radius;
+		this.hoursLength = 0.7 * this.radius;
+		
+		this.tickLength = 0.05 * this.radius;
+		
+		this.bodyBackColor = "#000000";
+		this.faceBackColor = "#ffffff";
+		this.foreColor     = "#000000";
+		
+		this.draw = function()
+		{
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			
+			// Fill the body of the clock
+			this.context.fillStyle = this.bodyBackColor;
+			this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+			
+			// Draw the border of the clock 
+			this.context.strokeRect(0, 0, this.canvas.width, this.canvas.height);
+			
+			// Save the original state of the canvas
+			this.context.save();
+			
+			// Put the coordinate axis origin in the lower left cords
+			this.context.save();
+			Util.transformToCartesian(this.context);
+			
+			// Move the context to the center of the canvas
+			this.context.translate(this.canvas.width / 2.0, this.canvas.height / 2.0);
+
+			// Clock face
+			Util.fillCircle(this.context, 0, 0, this.radius, this.faceBackColor);
+			Util.drawCircle(this.context, 0, 0, this.radius);
+			
+			// Get the current time
+			var now = new Date();
+			var seconds = now.getSeconds();
+			var minutes = now.getMinutes();
+			var hours   = now.getHours();
+			
+			// Angle of the seconds hand
+			var secondsTheta = 
+				(2*Math.PI) * (1 - seconds / 60.0) + Math.PI / 2.0;
+			
+			// Draw the seconds hand
+			Util.drawLine(this.context, 0, 0, 
+				this.secondsLength * Math.cos(secondsTheta), 
+				this.secondsLength * Math.sin(secondsTheta)); 
+				
+			// Angle of the minutes hand
+			var minutesTheta = 
+				(2*Math.PI - 2*Math.PI / 60.0 * minutes) + Math.PI / 2.0 - 
+				seconds / 60.0 * 2 * Math.PI / 60.0;
+			
+			// Draw the minutes hand
+			Util.drawLine(this.context, 0, 0, 
+				this.minutesLength * Math.cos(minutesTheta), 
+				this.minutesLength * Math.sin(minutesTheta)); 
+
+			// The angle of the hours hand
+			var hoursTheta = 
+				(2*Math.PI - 2*Math.PI / 12.0 * hours) + Math.PI / 2.0 -
+				minutes / 60.0 * 2 * Math.PI / 12.0;
+
+			// Draw the hours hand
+			Util.drawLine(this.context, 0, 0, 
+				this.hoursLength * Math.cos(hoursTheta), 
+				this.hoursLength * Math.sin(hoursTheta)); 
+				
+			// DEBUG!
+			/*
+			var t = new Trace(document.getElementById("debug"));
+			t.clear();
+			t.writeLine(hours + ":" + minutes + ":" + seconds);
+			t.writeLine("BLA");
+			*/
+
+			// Draw ticks
+			for(var theta = 0 ; theta < 2*Math.PI ; theta += 2*Math.PI / 12.0)
+			{
+				var o = this.radius - this.tickLength;
+				var ct = Math.cos(theta);
+				var st = Math.sin(theta);
+				Util.drawLine(this.context, o * ct, o * st, this.radius * ct, this.radius * st);
+			}
+			
+			// Restore the state of the canvas
+			this.context.restore(); // Translate to center
+			this.context.restore();	// Transform to cartesian
+		}
+	}
+	
+	
+	
+	var clock;
+	function setUp()
+	{
+		var clockCanvas = document.getElementById("clock");
+		clock = new Clock(clockCanvas);
+		clock.draw();
+		
+		setInterval('clock.draw();',1000);
+	}
+	</script>
+</head>
+<body onLoad="setUp();">
+	<canvas id="clock" width="512" height="512"></canvas>
+	<div id="debug"></div>
+</body>
