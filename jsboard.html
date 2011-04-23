@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>HTML5 test</title>
+	<script type="text/javascript" src="js/util.js"></script>
+	<script type="text/javascript" src="js/board.js"></script>
+	<script type="text/javascript">	
+	var clock;
+	function setUp()
+	{
+		var boardCanvas = document.getElementById("board");
+		board = new Board(boardCanvas, 8, 8);
+		//board.changeSizeFactor(0.9);
+		board.setColors("#ffffff", "#ff0000");
+		board.draw();
+	}
+	</script>
+</head>
+<body onLoad="setUp();">
+	<canvas id="board" width="512" height="512"></canvas>
+	<div id="debug"></div>
+</body>
